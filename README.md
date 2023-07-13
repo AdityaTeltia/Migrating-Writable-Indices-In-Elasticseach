@@ -34,6 +34,9 @@ Comparing the count of documents in ```source index``` and ```destination index`
 > Shifting the operation from source cluster to destination cluster
 
 ## Phase 2 - Second Migration Pass [Using ReIndex]
+<img width="551" alt="Screenshot 2023-07-14 at 12 35 24 AM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/b8d8c16a-790b-42b6-a74f-fadf9c27aca3">
+
+
 ### Step 1: Reindexing 
 Reindexing the index based on the field we added during the step 1.1 of phase 1 to add the documents which got added during the snapshot and restore was ongoing.
 [(Related Code)](https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/blob/main/src/main/java/org/example/ReindexUtils.java)
@@ -41,7 +44,3 @@ Reindexing the index based on the field we added during the step 1.1 of phase 1 
 ### Step 2: Cleanup 
 Downgrading the source index and deleting snapshot to release space (if needed)
 [(Related Code)](https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/blob/main/src/main/java/org/example/CleanupUtils.java)
-
-
-
-
