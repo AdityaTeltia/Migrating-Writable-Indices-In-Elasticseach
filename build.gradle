@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+}
+
+group = 'org.example'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.9.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    implementation 'org.elasticsearch.client:elasticsearch-rest-client:7.15.1'
+    implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.15.1'
+    // SLF4J API
+    implementation 'org.slf4j:slf4j-api:1.7.32'
+    // SLF4J Binding
+    runtimeOnly 'org.slf4j:slf4j-simple:1.7.32'
+    implementation 'com.google.code.gson:gson:2.8.9'
+}
+
+test {
+    useJUnitPlatform()
+}
