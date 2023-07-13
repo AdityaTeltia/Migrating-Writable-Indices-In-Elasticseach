@@ -7,6 +7,8 @@ Let me walk you through the steps we will go through in order to migrate an inde
 # Walkthrough
 
 ## Phase 1 - Inital Migration [Using Snapshot And Restore]
+<img width="734" alt="Screenshot 2023-07-14 at 12 15 55 AM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/c09cff57-bd20-41a1-b520-67faf6626cea">
+
 ### Step 0: Pre Migration Checks 
 Here I am checking mainly two things:
 1. Checking whether the defined ```destination index``` we have mentioned shouldn't already exist in the destination cluster.
