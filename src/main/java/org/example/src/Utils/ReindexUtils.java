@@ -1,4 +1,4 @@
-package org.example.Utils;
+package org.example.src.Utils;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.client.RequestOptions;

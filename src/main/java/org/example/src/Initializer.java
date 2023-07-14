@@ -1,4 +1,4 @@
-package org.example;
+package org.example.src;
 
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
@@ -27,24 +27,32 @@ public class Initializer {
 
     public static void addDocuments(RestHighLevelClient client, String[] indexNames) throws IOException {
         for (String indexName : indexNames) {
-            for (int docId = 1; docId <= 4; docId++) {
-                IndexRequest indexRequest = new IndexRequest(indexName)
-                        .id(String.valueOf(docId))
-                        .source(XContentType.JSON,
-                                "name", "Document " + docId,
-                                "id", docId);
-                IndexResponse indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);
-                logger.info("Document added to index {}: {}", indexName, indexResponse);
-            }
+            addDocumentsPerIndex(client , indexName);
+        }
+    }
+
+    public static void addDocumentsPerIndex(RestHighLevelClient client, String indexName) throws IOException {
+        for (int docId = 1; docId <= 4; docId++) {
+            IndexRequest indexRequest = new IndexRequest(indexName)
+                    .id(String.valueOf(docId))
+                    .source(XContentType.JSON,
+                            "name", "Document " + docId,
+                            "id", docId);
+            IndexResponse indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);
+            logger.info("Document added to index {}: {}", indexName, indexResponse);
         }
     }
 
     public static void refreshIndices(RestHighLevelClient client, String[] indexNames) throws IOException {
         for (String indexName : indexNames) {
-            RefreshRequest refreshRequest = new RefreshRequest(indexName);
-            client.indices().refresh(refreshRequest, RequestOptions.DEFAULT);
-            logger.info("Index {} refreshed", indexName);
+            refreshIndex(client, indexName);
         }
+    }
+
+    public static void refreshIndex(RestHighLevelClient client, String indexName) throws IOException {
+        RefreshRequest refreshRequest = new RefreshRequest(indexName);
+        client.indices().refresh(refreshRequest, RequestOptions.DEFAULT);
+        logger.info("Index {} refreshed", indexName);
     }
 
     public static void initialise(RestHighLevelClient client) throws IOException {

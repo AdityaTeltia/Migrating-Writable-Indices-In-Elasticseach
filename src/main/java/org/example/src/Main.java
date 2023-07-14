@@ -1,4 +1,4 @@
-package org.example;
+package org.example.src;
 
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RequestOptions;

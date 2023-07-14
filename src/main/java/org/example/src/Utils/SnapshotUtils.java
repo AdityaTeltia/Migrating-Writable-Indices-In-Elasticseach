@@ -1,4 +1,4 @@
-package org.example.Utils;
+package org.example.src.Utils;
 
 import org.elasticsearch.action.admin.cluster.snapshots.create.CreateSnapshotRequest;
 import org.elasticsearch.action.admin.cluster.snapshots.create.CreateSnapshotResponse;

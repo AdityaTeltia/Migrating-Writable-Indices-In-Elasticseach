@@ -1,4 +1,4 @@
-package org.example.Utils;
+package org.example.src.Utils;
 
 import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsRequest;
 import org.elasticsearch.action.ingest.PutPipelineRequest;
@@ -7,7 +7,6 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.example.Migration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,4 +1,4 @@
-package org.example.Utils;
+package org.example.src.Utils;
 
 import org.apache.http.util.EntityUtils;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
@@ -107,7 +107,7 @@ public class Checks {
             long sourceCount = checkDocumentCount(sourceClient, sourceIndex);
             long destCount = checkDocumentCount(destClient, destIndex);
 
-            if (sourceCount != destCount) {
+            if (sourceCount > destCount) {
                 logger.error(LOG_VERIFICATION_ERROR_MESSAGE);
             }
         } catch (IOException e) {

@@ -1,4 +1,4 @@
-package org.example.Utils;
+package org.example.src.Utils;
 
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
@@ -15,9 +15,7 @@ public class DocumentUtils {
     private static final int RANDOM_STRING_LENGTH = 10;
     private static final Random RANDOM = new Random();
 
-    public static void addDocuments(RestHighLevelClient client, String index) throws IOException {
-        int number = 5;
-        while (number > 0) {
+    public static void addDocuments(RestHighLevelClient client, String index) throws IOException, InterruptedException {
             // Define the document data
             String name = generateRandomString(RANDOM_STRING_LENGTH);
             int age = 30;
@@ -34,9 +32,6 @@ public class DocumentUtils {
             // Create the IndexRequest and add the document to the index
             IndexRequest indexRequest = new IndexRequest(index).source(builder);
             IndexResponse indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);
-
-            number--;
-        }
     }
 
     private static String generateRandomString(int length) {
@@ -47,7 +42,7 @@ public class DocumentUtils {
         return stringBuilder.toString();
     }
 
-    private static char randomChar() {
+    public static char randomChar() {
         String characters = "abcdefghijklmnopqrstuvwxyz0123456789";
         int index = RANDOM.nextInt(characters.length());
         return characters.charAt(index);

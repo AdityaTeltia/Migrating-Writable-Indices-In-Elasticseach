@@ -1,8 +1,8 @@
-package org.example;
+package org.example.src;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.example.Utils.*;
+import org.example.src.Utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,9 +32,6 @@ public class Migration {
 
             // Step 2.1: Verifying snapshot and restore
             Checks.verifyDocumentsCount(sourceClient, sourceIndex, destClient, destIndex);
-
-            // Adding documents to the source index to see if they get migrated in the second pass.
-            DocumentUtils.addDocuments(sourceClient, sourceIndex);
 
             // Making the pipeline null in the destination index
             PipelineUtils.makeNull(destClient, destIndex);
