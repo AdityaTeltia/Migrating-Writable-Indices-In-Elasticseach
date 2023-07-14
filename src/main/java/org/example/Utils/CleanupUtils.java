@@ -1,4 +1,4 @@
-package org.example;
+package org.example.Utils;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;

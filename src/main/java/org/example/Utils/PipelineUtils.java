@@ -1,4 +1,4 @@
-package org.example;
+package org.example.Utils;
 
 import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsRequest;
 import org.elasticsearch.action.ingest.PutPipelineRequest;

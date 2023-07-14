@@ -2,6 +2,7 @@ package org.example;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.example.Utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +47,7 @@ public class Migration {
     }
 
     public static void phaseTwoMigrateIndices(RestHighLevelClient destClient, RestHighLevelClient sourceClient,
-                                              String sourceHost, String sourceIndex, String destIndex)
+                                              String sourceIndex, String destIndex)
             throws IOException {
         try {
             // Phase 3: Reindexing new index
@@ -89,7 +90,7 @@ public class Migration {
                     String sourceIndex = batchSourceIndices.get(j);
                     String destIndex = batchDestIndices.get(j);
 
-                    phaseTwoMigrateIndices(destClient, sourceClient, sourceHost, sourceIndex, destIndex);
+                    phaseTwoMigrateIndices(destClient, sourceClient, sourceIndex, destIndex);
                 }
             }
 

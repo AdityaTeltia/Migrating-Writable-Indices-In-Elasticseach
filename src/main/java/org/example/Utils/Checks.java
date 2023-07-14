@@ -1,4 +1,4 @@
-package org.example;
+package org.example.Utils;
 
 import org.apache.http.util.EntityUtils;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
