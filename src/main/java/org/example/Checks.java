@@ -18,12 +18,8 @@ import com.google.gson.JsonElement;
 public class Checks {
     private static final Logger logger = LoggerFactory.getLogger(Checks.class);
     private static final String LOG_ERROR_MESSAGE_FORMAT = "Index '%s' already exists.";
-    private static final String LOG_WARNING_MESSAGE_DISK_SPACE = "Unable to retrieve available disk space information.";
-    private static final String LOG_WARNING_MESSAGE_SOURCE_INDEX_SIZE = "Unable to retrieve the size of the source index '%s'.";
     private static final String LOG_WARNING_MESSAGE_DISK_SPACE_INSUFFICIENT = "Destination cluster does not have enough disk space to accommodate the source index.";
     private static final String LOG_VERIFICATION_ERROR_MESSAGE = "Document count mismatch after snapshot and restore!";
-    private static final String LOG_VERIFICATION_UNSUCCESSFUL_MESSAGE = "Migration Unsuccessful";
-    private static final int TIMEOUT_MILLIS = 30000;
 
     private static long extractSizeInBytes(String responseBody) {
         JsonObject jsonObject = JsonParser.parseString(responseBody).getAsJsonObject();
@@ -68,9 +64,8 @@ public class Checks {
                     "GET",
                     "/_nodes/stats");
             Response response = lowLevelDestClient.performRequest(request);
-
-            long sizeInBytesSum = calculateSizeInBytesSum(response.toString());
-            System.out.println("Sum of size_in_bytes: " + sizeInBytesSum);
+            String responseBody = EntityUtils.toString(response.getEntity());
+            long availableDiskSpace = calculateSizeInBytesSum(responseBody);
 
             RestClient lowLevelSourceClient = sourceClient.getLowLevelClient();
             request = new Request(
@@ -78,20 +73,16 @@ public class Checks {
                     "/"+sourceIndex+"/_stats"
             );
             response = lowLevelSourceClient.performRequest(request);
-
             // Convert the response entity to a string
-            String responseBody = EntityUtils.toString(response.getEntity());
-
+            responseBody = EntityUtils.toString(response.getEntity());
             // Parse the JSON response to extract the size_in_bytes value
             long sourceIndexSize = extractSizeInBytes(responseBody);
 
-
-
             // Compare available disk space with source index size
-            // if (availableDiskSpace < sourceIndexSize) {
-            //     logger.warn(LOG_WARNING_MESSAGE_DISK_SPACE_INSUFFICIENT);
-            //     return;
-            // }
+             if (availableDiskSpace < sourceIndexSize) {
+                 logger.warn(LOG_WARNING_MESSAGE_DISK_SPACE_INSUFFICIENT);
+                 return;
+             }
         } catch (IOException e) {
             logger.error("Error during pre-migration check: " + e.getMessage(), e);
             throw e;

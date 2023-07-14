@@ -18,7 +18,7 @@ public class Migration {
                                               String destIndex) throws IOException {
         try {
             // Phase 0: Pre-migration checks
-//            Checks.preMigrationCheck(destClient, sourceClient, sourceIndex, destIndex);
+            Checks.preMigrationCheck(destClient, sourceClient, sourceIndex, destIndex);
 
             // Phase 1: Setting mapping for the new field we are adding
             MappingUtils.setMapping(sourceClient, sourceIndex);
