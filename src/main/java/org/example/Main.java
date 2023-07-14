@@ -25,7 +25,6 @@ public class Main {
     // Hosts
     private static final String sourceHost = "http://localhost:9200";
     private static final String destHost = "http://localhost:9201";
-
     private static final String prefixIndex = "test";
 
     public static void main(String[] args) {
@@ -34,6 +33,7 @@ public class Main {
              RestHighLevelClient destClient = new RestHighLevelClient(
                      RestClient.builder(HttpHost.create(destHost)))) {
 
+            // Initializing some indices for testing purposes
             Initializer.initialise(sourceClient);
 
             // Indexes

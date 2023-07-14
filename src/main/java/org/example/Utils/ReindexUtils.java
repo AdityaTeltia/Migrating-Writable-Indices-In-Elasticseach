@@ -14,17 +14,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 public class ReindexUtils {
-
     private static final Logger logger = LoggerFactory.getLogger(ReindexUtils.class);
 
-    public static void reindexData(RestHighLevelClient destClient, String sourceIndex, String destIndex) throws IOException {
+    public static void reindexData(RestHighLevelClient destClient, String sourceHost, String sourceIndex, String destIndex) throws IOException {
         try {
             ReindexRequest reindexRequest = new ReindexRequest();
-            reindexRequest.setRemoteInfo(createRemoteInfo());
+            reindexRequest.setRemoteInfo(createRemoteInfo(sourceHost));
             reindexRequest.setSourceIndices(sourceIndex);
             reindexRequest.setDestIndex(destIndex);
             reindexRequest.setScript(createScript());
@@ -34,15 +35,21 @@ public class ReindexUtils {
         } catch (IOException e) {
             logger.error("Failed to reindex data from index {} to {}: {}", sourceIndex, destIndex, e.getMessage());
             throw e;
-        } catch (ElasticsearchException e) {
+        } catch (ElasticsearchException | URISyntaxException e) {
             logger.error("Failed to reindex data from index {} to {}: {}", sourceIndex, destIndex, e.getMessage());
             throw new IOException("Failed to reindex data", e);
         }
     }
 
-    private static RemoteInfo createRemoteInfo() {
+    private static RemoteInfo createRemoteInfo(String sourceHost) throws URISyntaxException {
+        URI uri = new URI(sourceHost);
+        String scheme = uri.getScheme();
+        String host = uri.getHost();
+        int port = uri.getPort();
+        String pathPrefix = uri.getPath();
+
         return new RemoteInfo(
-                "http", "localhost", 9200, null,
+                scheme, host, port, pathPrefix,
                 new BytesArray(QueryBuilders.existsQuery("_is_under_migration").toString()),
                 "", "", Collections.emptyMap(),
                 new TimeValue(100, TimeUnit.MILLISECONDS),

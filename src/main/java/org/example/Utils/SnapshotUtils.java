@@ -27,15 +27,19 @@ public class SnapshotUtils {
         LocalDateTime now = LocalDateTime.now();
         String timestamp = now.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         String snapshotName = String.format(SNAPSHOT_NAME_FORMAT, sourceIndex, timestamp);
+        try {
+            CreateSnapshotRequest createSnapshotRequest = new CreateSnapshotRequest(repository, snapshotName)
+                    .indices(sourceIndex)
+                    .includeGlobalState(false)
+                    .waitForCompletion(true);
 
-        CreateSnapshotRequest createSnapshotRequest = new CreateSnapshotRequest(repository, snapshotName)
-                .indices(sourceIndex)
-                .includeGlobalState(false)
-                .waitForCompletion(true);
-
-        CreateSnapshotResponse response = client.snapshot().create(createSnapshotRequest, RequestOptions.DEFAULT);
-        logger.info("Snapshot {} created successfully", snapshotName);
-        return snapshotName;
+            CreateSnapshotResponse response = client.snapshot().create(createSnapshotRequest, RequestOptions.DEFAULT);
+            logger.info("Snapshot {} created successfully", snapshotName);
+            return snapshotName;
+        }catch(IOException e){
+            logger.error("Failed to create snapshot : {}", e.getMessage());
+            throw e;
+        }
     }
 
     public static void restoreSnapshot(RestHighLevelClient client, String repository, String snapshotName, String sourceIndex, String destIndex) throws IOException {
@@ -45,19 +49,30 @@ public class SnapshotUtils {
         Objects.requireNonNull(sourceIndex, "Source index name must not be null");
         Objects.requireNonNull(destIndex, "Destination index name must not be null");
 
-        RestoreSnapshotRequest restoreSnapshotRequest = new RestoreSnapshotRequest(repository, snapshotName)
-                .indices(sourceIndex)
-                .renamePattern(sourceIndex)
-                .renameReplacement(destIndex)
-                .waitForCompletion(true);
+        try {
+            RestoreSnapshotRequest restoreSnapshotRequest = new RestoreSnapshotRequest(repository, snapshotName)
+                    .indices(sourceIndex)
+                    .renamePattern(sourceIndex)
+                    .renameReplacement(destIndex)
+                    .waitForCompletion(true);
 
-        RestoreSnapshotResponse response = client.snapshot().restore(restoreSnapshotRequest, RequestOptions.DEFAULT);
-        logger.info("Snapshot {} restored successfully to index {}", snapshotName, destIndex);
+            RestoreSnapshotResponse response = client.snapshot().restore(restoreSnapshotRequest, RequestOptions.DEFAULT);
+            logger.info("Snapshot {} restored successfully to index {}", snapshotName, destIndex);
+        }catch(IOException e){
+            logger.error("Failed to restore {}: {}", snapshotName, e.getMessage());
+            throw e;
+        }
     }
 
-    public static void snaps(RestHighLevelClient sourceClient, String sourceRepository, String sourceIndex,
+    public static String snaps(RestHighLevelClient sourceClient, String sourceRepository, String sourceIndex,
                              RestHighLevelClient destClient, String destIndex) throws IOException {
-        String snapshotName = createSnapshot(sourceClient, sourceRepository, sourceIndex);
-        restoreSnapshot(destClient, sourceRepository, snapshotName, sourceIndex, destIndex);
+        try {
+            String snapshotName = createSnapshot(sourceClient, sourceRepository, sourceIndex);
+            restoreSnapshot(destClient, sourceRepository, snapshotName, sourceIndex, destIndex);
+            return snapshotName;
+        }catch(IOException e){
+            logger.error("Failed snapshot and restore : {}" , e.getMessage());
+            throw e;
+        }
     }
 }
