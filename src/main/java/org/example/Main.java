@@ -17,15 +17,11 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Main {
-
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
-
     // Pipeline
     private static final String pipelineName = "adding_hidden_field";
-
     // S3_repository
-    private static final String sourceRepository = "s3testing";
-
+    private static final String sourceRepository = "Snapshot_S3";
     // Hosts
     private static final String sourceHost = "http://localhost:9200";
     private static final String destHost = "http://localhost:9201";
