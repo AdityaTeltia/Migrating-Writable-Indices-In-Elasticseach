@@ -27,18 +27,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 class MyUnitTest {
-
     private static final String sourceHost = "http://localhost:9200";
     private static final String destHost = "http://localhost:9201";
-
     private static final String pipelineName = "adding_hidden_field";
     // S3_repository
     private static final String sourceRepository = "s3testing";
-    private final int RANDOM_STRING_LENGTH = 10;
     private AtomicBoolean migrationCompleted = new AtomicBoolean(false);
-
     String sourceIndex = "test";
-    String destIndex = "test";
+    String destIndex = "restored_test";
     int threadCount = 9;
 
     @Test
@@ -48,6 +44,7 @@ class MyUnitTest {
              RestHighLevelClient destClient = new RestHighLevelClient(
                      RestClient.builder(HttpHost.create(destHost)))) {
 
+            DocumentUtils.addDocuments(sourceClient , sourceIndex);
             // Phase One
             phaseOne(sourceClient, destClient);
 
@@ -166,7 +163,7 @@ class MyUnitTest {
         executor.execute(() -> {
             try {
                 Migration.phaseTwoMigrateIndices(destClient, sourceClient, sourceHost, sourceIndex, destIndex);
-                migrationCompleted.set(true);
+//                migrationCompleted.set(true);
                 latch.countDown();
             } catch (IOException e) {
                 e.printStackTrace();

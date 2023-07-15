@@ -1,8 +1,10 @@
 package org.example.src.Utils;
 
+import org.apache.http.HttpHost;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -47,4 +49,5 @@ public class DocumentUtils {
         int index = RANDOM.nextInt(characters.length());
         return characters.charAt(index);
     }
+
 }
