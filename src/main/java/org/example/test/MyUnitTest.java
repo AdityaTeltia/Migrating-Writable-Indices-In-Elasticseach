@@ -21,9 +21,7 @@ import org.example.src.Migration;
 
 import java.io.IOException;
 import java.util.Random;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 class MyUnitTest {
@@ -46,26 +44,31 @@ class MyUnitTest {
 
             DocumentUtils.addDocuments(sourceClient , sourceIndex);
             // Phase One
-            phaseOne(sourceClient, destClient);
+            double maxSeqNoValue = phaseOne(sourceClient, destClient).get();
 
             Initializer.refreshIndex(sourceClient, sourceIndex);
             Initializer.refreshIndex(destClient, destIndex);
             migrationCompleted.set(false);
 
             // Phase Two
-            phaseTwo(sourceClient, destClient);
+            phaseTwo(sourceClient, destClient, maxSeqNoValue);
 
         } catch (IOException e) {
             throw e;
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    void phaseOne(RestHighLevelClient sourceClient, RestHighLevelClient destClient) throws InterruptedException {
+    Future<Double> phaseOne(RestHighLevelClient sourceClient, RestHighLevelClient destClient) throws InterruptedException {
         // Create a thread pool with the desired number of threads
         ExecutorService executor = Executors.newFixedThreadPool(threadCount + 2);
 
         // Create a countdown latch to synchronize the threads
         CountDownLatch latch = new CountDownLatch(threadCount + 2);
+
+        // Use CompletableFuture to capture the result
+        CompletableFuture<Double> maxSeqNoValueFuture = new CompletableFuture<>();
 
         // Thread 1: Add documents
         executor.execute(() -> {
@@ -96,11 +99,13 @@ class MyUnitTest {
         // Thread 3: Phase One Migration
         executor.execute(() -> {
             try {
-                Migration.phaseOneMigrateIndices(sourceClient, destClient, sourceIndex, pipelineName, sourceRepository, destIndex);
+                double maxSeqNoValue = Migration.phaseOneMigrateIndices(sourceClient, destClient, sourceIndex, pipelineName, sourceRepository, destIndex);
                 migrationCompleted.set(true);
-                latch.countDown();
+                maxSeqNoValueFuture.complete(maxSeqNoValue); // Complete the CompletableFuture with the value
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                latch.countDown();
             }
         });
 
@@ -121,12 +126,14 @@ class MyUnitTest {
 
         // Wait for all threads to complete
         latch.await();
-
         // Shutdown the executor
         executor.shutdown();
+
+        // Return the Future containing the maxSeqNoValue
+        return maxSeqNoValueFuture;
     }
 
-    void phaseTwo(RestHighLevelClient sourceClient, RestHighLevelClient destClient) throws InterruptedException {
+    void phaseTwo(RestHighLevelClient sourceClient, RestHighLevelClient destClient, double maxSeqNoValue) throws InterruptedException {
         // Create a thread pool with the desired number of threads
         ExecutorService executor = Executors.newFixedThreadPool(threadCount + 2);
 
@@ -162,11 +169,14 @@ class MyUnitTest {
         // Thread 3: Phase Two Migration
         executor.execute(() -> {
             try {
-                Migration.phaseTwoMigrateIndices(destClient, sourceClient, sourceHost, sourceIndex, destIndex);
-//                migrationCompleted.set(true);
+                Migration.phaseTwoMigrateIndices(destClient, sourceClient, sourceHost, sourceIndex, destIndex, maxSeqNoValue);
+                Thread.sleep(5000);
+                migrationCompleted.set(true);
                 latch.countDown();
             } catch (IOException e) {
                 e.printStackTrace();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         });
 

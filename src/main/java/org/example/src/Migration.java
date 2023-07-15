@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 
 public class Migration {
@@ -14,18 +15,22 @@ public class Migration {
     private static int count = 1;
     private static final Logger logger = LoggerFactory.getLogger(Migration.class);
 
-    public static void phaseOneMigrateIndices(RestHighLevelClient sourceClient, RestHighLevelClient destClient,
+    public static double phaseOneMigrateIndices(RestHighLevelClient sourceClient, RestHighLevelClient destClient,
                                               String sourceIndex, String pipelineName, String sourceRepository,
                                               String destIndex) throws IOException {
         try {
             // Step 0: Pre-migration checks
             Checks.preMigrationCheck(destClient, sourceClient, sourceIndex, destIndex);
 
+            /*
             // Step 1: Setting mapping for the new field we are adding
             MappingUtils.setMapping(sourceClient, sourceIndex);
 
             // Step 1.1: Change write pipeline
-            PipelineUtils.changePipeline(sourceClient, pipelineName, count, sourceIndex);
+            PipelineUtils.changePipeline(sourceClient, pipelineName, count, sourceIndex); */
+
+            //Step 1: Get Last Sequence Number
+            double maxSeqNoValue = DocumentUtils.getLastSequenceNumber(sourceClient, sourceIndex);
 
             // Step 2: Snapshot and restore
             String snapshotName = SnapshotUtils.snaps(sourceClient, sourceRepository, sourceIndex, destClient, destIndex);
@@ -41,6 +46,7 @@ public class Migration {
 
             count++;
             logger.info("First Phase Completed!");
+            return maxSeqNoValue;
         } catch (ElasticsearchException e) {
             logger.error("Migration failed: ", e);
             throw e;
@@ -48,11 +54,11 @@ public class Migration {
     }
 
     public static void phaseTwoMigrateIndices(RestHighLevelClient destClient, RestHighLevelClient sourceClient, String sourceHost,
-                                              String sourceIndex, String destIndex)
+                                              String sourceIndex, String destIndex, double maxSeqNoValue)
             throws IOException {
         try {
             // Step 1: Reindexing new index
-            ReindexUtils.reindexData(destClient, sourceHost, sourceIndex, destIndex);
+            ReindexUtils.reindexData(destClient, sourceHost, sourceIndex, destIndex, maxSeqNoValue);
 
             // Step 1.1: Post second pass verification
             Checks.verifyDocumentsCount(sourceClient, sourceIndex, destClient, destIndex);
@@ -75,14 +81,18 @@ public class Migration {
                 List<String> batchDestIndices = destIndices.subList(i,
                         Math.min(i + BATCH_SIZE, destIndices.size()));
 
+                HashMap<String , Double> sequenceMap = new HashMap<String, Double>();
+
                 logger.info("Migrating batch {}: {} to {}", ((i / BATCH_SIZE) + 1),
                         batchSourceIndices, batchDestIndices);
                 for (int j = 0; j < batchSourceIndices.size(); j++) {
                     String sourceIndex = batchSourceIndices.get(j);
                     String destIndex = batchDestIndices.get(j);
 
-                    phaseOneMigrateIndices(sourceClient, destClient, sourceIndex,
+                    double maxSeqNoValue = phaseOneMigrateIndices(sourceClient, destClient, sourceIndex,
                             pipelineName, sourceRepository, destIndex);
+
+                    sequenceMap.put(sourceIndex, maxSeqNoValue);
                 }
 
 //              ---------------------------------- SHIFT OPERATIONS -----------------------------------------------
@@ -90,8 +100,8 @@ public class Migration {
                 for (int j = 0; j < batchSourceIndices.size(); j++) {
                     String sourceIndex = batchSourceIndices.get(j);
                     String destIndex = batchDestIndices.get(j);
-
-                    phaseTwoMigrateIndices(destClient, sourceClient, sourceHost, sourceIndex, destIndex);
+                    double maxSeqNoValue = sequenceMap.get(sourceIndex);
+                    phaseTwoMigrateIndices(destClient, sourceClient, sourceHost, sourceIndex, destIndex, maxSeqNoValue);
                 }
             }
 

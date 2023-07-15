@@ -1,21 +1,56 @@
 package org.example.src.Utils;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.http.HttpHost;
+import org.apache.http.util.EntityUtils;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.metrics.MaxAggregationBuilder;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Random;
 
 public class DocumentUtils {
 
     private static final int RANDOM_STRING_LENGTH = 10;
     private static final Random RANDOM = new Random();
+
+
+    public static double getLastSequenceNumber(RestHighLevelClient client, String index) throws IOException {
+        MaxAggregationBuilder maxSeqNoAggregation = AggregationBuilders.max("max_seq_no").field("_seq_no");
+
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
+                .size(0)
+                .aggregation(maxSeqNoAggregation);
+
+        SearchRequest searchRequest = new SearchRequest(index)
+                .source(searchSourceBuilder);
+
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        String responseBody = searchResponse.toString();
+        JsonElement jsonElement = JsonParser.parseString(responseBody);
+        JsonObject jsonObject = jsonElement.getAsJsonObject();
+        JsonElement maxSeqNoElement = jsonObject.getAsJsonObject("aggregations")
+                .getAsJsonObject("max#max_seq_no")
+                .get("value");
+
+        double maxSeqNoValue = maxSeqNoElement.getAsDouble();
+        return maxSeqNoValue;
+    }
+
 
     public static void addDocuments(RestHighLevelClient client, String index) throws IOException, InterruptedException {
             // Define the document data

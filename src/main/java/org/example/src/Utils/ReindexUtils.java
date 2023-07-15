@@ -22,13 +22,13 @@ import java.util.concurrent.TimeUnit;
 public class ReindexUtils {
     private static final Logger logger = LoggerFactory.getLogger(ReindexUtils.class);
 
-    public static void reindexData(RestHighLevelClient destClient, String sourceHost, String sourceIndex, String destIndex) throws IOException {
+    public static void reindexData(RestHighLevelClient destClient, String sourceHost, String sourceIndex, String destIndex, double maxSeqNoValue) throws IOException {
         try {
             ReindexRequest reindexRequest = new ReindexRequest();
-            reindexRequest.setRemoteInfo(createRemoteInfo(sourceHost));
+            reindexRequest.setRemoteInfo(createRemoteInfo(sourceHost, maxSeqNoValue));
             reindexRequest.setSourceIndices(sourceIndex);
             reindexRequest.setDestIndex(destIndex);
-            reindexRequest.setScript(createScript());
+//            reindexRequest.setScript(createScript());
 
             destClient.reindex(reindexRequest, RequestOptions.DEFAULT);
             logger.info("Reindexing data from index {} to {} completed successfully", sourceIndex, destIndex);
@@ -41,16 +41,26 @@ public class ReindexUtils {
         }
     }
 
-    private static RemoteInfo createRemoteInfo(String sourceHost) throws URISyntaxException {
+    private static RemoteInfo createRemoteInfo(String sourceHost, double maxSeqNoValue) throws URISyntaxException {
         URI uri = new URI(sourceHost);
         String scheme = uri.getScheme();
         String host = uri.getHost();
         int port = uri.getPort();
         String pathPrefix = uri.getPath();
 
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"range\": {\n" +
+                "      \"_seq_no\": {\n" +
+                "        \"gt\":"+ maxSeqNoValue+"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+
         return new RemoteInfo(
                 scheme, host, port, pathPrefix,
-                new BytesArray(QueryBuilders.existsQuery("_is_under_migration").toString()),
+                new BytesArray(QueryBuilders.rangeQuery("_seq_no").gt(maxSeqNoValue).toString()),
                 "", "", Collections.emptyMap(),
                 new TimeValue(100, TimeUnit.MILLISECONDS),
                 new TimeValue(100, TimeUnit.SECONDS)
