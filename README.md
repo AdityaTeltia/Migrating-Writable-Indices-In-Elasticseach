@@ -1,11 +1,14 @@
 # Migrating A Writable Index [With Zero Downtime]
 Have you ever tried migrating an existing index between cluster due to some personal reasons, but always have to face downtime to get this work done. I have come up with the perfect solution to resolve this issue and using this solution you will be able to achieve the migration not only with zero downtime but will also be able to achieve eventual consistency with no data loss.
 
-Let me walk you through the steps we will go through in order to migrate an index or set of indices.
-> There will be two phases with phases divided due to switching of operations from one cluster to another which will be configured client side. Furthermore each phase will be divided into steps which are as follows.
+# Contents
+1. [Quick Setup](#quick-setup)
+2. [Approach Walkthrough](#approach-walkthrough)
+3. [How I tested ?](#how-i-tested-)
+4. [Visualiser](#visualiser)
 
 
-# How to use ?
+# Quick Setup
 
 1. You have to download a plugin `repository_s3` in both the desired cluster to either save the snapshot or restore the snapshot from AWS S3.
    ```
@@ -46,6 +49,9 @@ Let me walk you through the steps we will go through in order to migrate an inde
    
    ```
 6. Run the Main class and wait for all the magic to happen.
+
+Let me walk you through the steps we will go through in order to migrate an index or set of indices.
+> There will be two phases with phases divided due to switching of operations from one cluster to another which will be configured client side. Furthermore each phase will be divided into steps which are as follows.
 
 # Approach Walkthrough
 
