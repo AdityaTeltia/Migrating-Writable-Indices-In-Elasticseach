@@ -56,24 +56,42 @@ Let me walk you through the steps we will go through in order to migrate an inde
 # Approach Walkthrough
 
 ## Phase 1 - Inital Migration [Using Snapshot And Restore]
-<img width="734" alt="Screenshot 2023-07-14 at 12 15 55 AM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/c09cff57-bd20-41a1-b520-67faf6626cea">
+<img width="639" alt="Screenshot 2023-07-16 at 4 09 28 PM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/fc8cb793-c6cb-4c31-b269-12ea194907b8">
+
 
 ### Step 0: Pre Migration Checks 
 Here I am checking mainly two things:
 1. Checking whether the defined ```destination index``` we have mentioned shouldn't already exist in the destination cluster.
 2. Checking whether the available disk space can store the coming index from source cluster or not.
-[(Related Code)](https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/blob/main/src/main/java/org/example/Utils/Checks.java)
 
-### Step 1: Setting Mapping for new field 
-I am adding a new field say ```is_under_migration```  with ```docs_value``` set to false which make it a field which we can query but we cannot sort or aggregate on a field, or access the field value from a script. Adding this field so that we can query the updated docs based on this field during second phase of our process. This will get more clear in a while.
-[(Related Code)](https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/blob/main/src/main/java/org/example/Utils/MappingUtils.java)
+### Step 1: Storing last sequence number
+Storing the sequence number of the last operation happened on this index to query based on the number greater than this during the second pass while we reindex the delta changes.
+```
+public static double getLastSequenceNumber(RestHighLevelClient client, String index) throws IOException {
+        MaxAggregationBuilder maxSeqNoAggregation = AggregationBuilders.max("max_seq_no").field("_seq_no");
 
-### Step 1.1: Setting up pipeline to add this new field in upcoming documents 
-Now I am adding a setting for ```source index``` i.e setting its default pipeline to a pipeline which will add the field ```is_under_migration``` to all the upcoming documents. By upcoming I mean documents which will be coming afterwards this setting is enabled.
-[(Related Code)](https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/blob/main/src/main/java/org/example/Utils/PipelineUtils.java)
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
+                .size(0)
+                .aggregation(maxSeqNoAggregation);
+
+        SearchRequest searchRequest = new SearchRequest(index)
+                .source(searchSourceBuilder);
+
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        String responseBody = searchResponse.toString();
+        JsonElement jsonElement = JsonParser.parseString(responseBody);
+        JsonObject jsonObject = jsonElement.getAsJsonObject();
+        JsonElement maxSeqNoElement = jsonObject.getAsJsonObject("aggregations")
+                .getAsJsonObject("max#max_seq_no")
+                .get("value");
+
+        double maxSeqNoValue = maxSeqNoElement.getAsDouble();
+        return maxSeqNoValue;
+}
+```
 
 ### Step 2: Taking inital snapshot and restoring it 
-Taking the snapshot of the current state and restoring it to the destination cluster. Since we have added a new field to the index using pipeline we will be able to segregate the newly added documents based on that field.
+Taking the snapshot of the current state and restoring it to the destination cluster. Since we already have stored the last sequence number we can move in with this first pass now.
 [(Related Code)](https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/blob/main/src/main/java/org/example/Utils/SnapshotUtils.java)
 
 ### Step 2.1: Verifying Snapshot and Restore 
@@ -83,11 +101,10 @@ Comparing the count of documents in ```source index``` and ```destination index`
 > Shifting the operation from source cluster to destination cluster
 
 ## Phase 2 - Second Migration Pass [Using ReIndex]
-<img width="551" alt="Screenshot 2023-07-14 at 12 35 24 AM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/b8d8c16a-790b-42b6-a74f-fadf9c27aca3">
-
+<img width="524" alt="Screenshot 2023-07-16 at 4 13 45 PM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/69299dab-bece-49a3-be5a-ac1ce700955e">
 
 ### Step 1: Reindexing 
-Reindexing the index based on the field we added during the step 1.1 of phase 1 to add the documents which got added during the snapshot and restore was ongoing.
+Reindexing the index based on the last sequence number which we stored during the phase1. We will be querying all those documents which has sequence number `gt: maxSeqNoValue`.
 [(Related Code)](https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/blob/main/src/main/java/org/example/Utils/ReindexUtils.java)
 
 ### Step 2: Cleanup 
