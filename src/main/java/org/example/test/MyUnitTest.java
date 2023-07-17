@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.example.src.Utils.*;
 import org.example.src.Migration;
 
-
+import java.util.Scanner;
 import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.*;
@@ -27,12 +27,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class MyUnitTest {
     private static final String sourceHost = "http://localhost:9200";
     private static final String destHost = "http://localhost:9201";
-    private static final String pipelineName = "adding_hidden_field";
     // S3_repository
-    private static final String sourceRepository = "s3testing";
-    private AtomicBoolean migrationCompleted = new AtomicBoolean(false);
+    private static final String sourceRepository = "Snapshot_S3";
+    private AtomicBoolean phaseCompleted = new AtomicBoolean(false);
     String sourceIndex = "test";
-    String destIndex = "restored_test";
+    String destIndex = "test";
     int threadCount = 9;
 
     @Test
@@ -42,17 +41,17 @@ class MyUnitTest {
              RestHighLevelClient destClient = new RestHighLevelClient(
                      RestClient.builder(HttpHost.create(destHost)))) {
 
-            DocumentUtils.addDocuments(sourceClient , sourceIndex);
+            DocumentUtils.addDocuments(sourceClient , sourceIndex, "1");
             // Phase One
             double maxSeqNoValue = phaseOne(sourceClient, destClient).get();
-
             Initializer.refreshIndex(sourceClient, sourceIndex);
             Initializer.refreshIndex(destClient, destIndex);
-            migrationCompleted.set(false);
+            phaseCompleted.set(false);
 
-            // Phase Two
+            updateDocuments(sourceClient, sourceIndex , "1");
+            Thread.sleep(10000);
             phaseTwo(sourceClient, destClient, maxSeqNoValue);
-
+            // Phase Two
         } catch (IOException e) {
             throw e;
         } catch (ExecutionException e) {
@@ -60,7 +59,7 @@ class MyUnitTest {
         }
     }
 
-    Future<Double> phaseOne(RestHighLevelClient sourceClient, RestHighLevelClient destClient) throws InterruptedException {
+    Future<Double> phaseOne(RestHighLevelClient sourceClient, RestHighLevelClient destClient) throws InterruptedException, IOException {
         // Create a thread pool with the desired number of threads
         ExecutorService executor = Executors.newFixedThreadPool(threadCount + 2);
 
@@ -86,7 +85,7 @@ class MyUnitTest {
         // Thread 2: Update documents
         executor.execute(() -> {
             try {
-                updateDocuments(sourceClient, sourceIndex);
+                updateDocuments(sourceClient, sourceIndex, null);
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
@@ -99,8 +98,8 @@ class MyUnitTest {
         // Thread 3: Phase One Migration
         executor.execute(() -> {
             try {
-                double maxSeqNoValue = Migration.phaseOneMigrateIndices(sourceClient, destClient, sourceIndex, pipelineName, sourceRepository, destIndex);
-                migrationCompleted.set(true);
+                double maxSeqNoValue = Migration.phaseOneMigrateIndices(sourceClient, destClient, sourceIndex, sourceRepository, destIndex);
+                phaseCompleted.set(true);
                 maxSeqNoValueFuture.complete(maxSeqNoValue); // Complete the CompletableFuture with the value
             } catch (IOException e) {
                 e.printStackTrace();
@@ -123,6 +122,7 @@ class MyUnitTest {
                 }
             });
         }
+
 
         // Wait for all threads to complete
         latch.await();
@@ -156,7 +156,7 @@ class MyUnitTest {
         // Thread 2: Update documents in destination index
         executor.execute(() -> {
             try {
-                updateDocuments(destClient, destIndex);
+                updateDocuments(destClient, destIndex, null);
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
@@ -171,7 +171,7 @@ class MyUnitTest {
             try {
                 Migration.phaseTwoMigrateIndices(destClient, sourceClient, sourceHost, sourceIndex, destIndex, maxSeqNoValue);
                 Thread.sleep(5000);
-                migrationCompleted.set(true);
+                phaseCompleted.set(true);
                 latch.countDown();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -203,8 +203,8 @@ class MyUnitTest {
     }
 
     public void addDocuments(RestHighLevelClient client, String index) throws IOException, InterruptedException {
-        while (!migrationCompleted.get()) {
-            DocumentUtils.addDocuments(client, index);
+        while (!phaseCompleted.get()) {
+            DocumentUtils.addDocuments(client, index, null);
             Thread.sleep(200);
         }
     }
@@ -216,9 +216,13 @@ class MyUnitTest {
         return stringBuilder.toString();
     }
 
-    private void updateDocuments(RestHighLevelClient client, String index) throws IOException, InterruptedException {
+    private void updateDocuments(RestHighLevelClient client, String index , String id) throws IOException, InterruptedException {
         // Fetch a random document ID from the source index
         String randomDocumentId = getRandomDocumentId(client, index);
+
+        if(id != null){
+            randomDocumentId = id;
+        }
 
         // If a document ID is found
         if (randomDocumentId != null) {

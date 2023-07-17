@@ -28,7 +28,6 @@ public class ReindexUtils {
             reindexRequest.setRemoteInfo(createRemoteInfo(sourceHost, maxSeqNoValue));
             reindexRequest.setSourceIndices(sourceIndex);
             reindexRequest.setDestIndex(destIndex);
-//            reindexRequest.setScript(createScript());
 
             destClient.reindex(reindexRequest, RequestOptions.DEFAULT);
             logger.info("Reindexing data from index {} to {} completed successfully", sourceIndex, destIndex);
@@ -48,31 +47,12 @@ public class ReindexUtils {
         int port = uri.getPort();
         String pathPrefix = uri.getPath();
 
-        String query = "{\n" +
-                "  \"query\": {\n" +
-                "    \"range\": {\n" +
-                "      \"_seq_no\": {\n" +
-                "        \"gt\":"+ maxSeqNoValue+"\n" +
-                "      }\n" +
-                "    }\n" +
-                "  }\n" +
-                "}";
-
         return new RemoteInfo(
                 scheme, host, port, pathPrefix,
                 new BytesArray(QueryBuilders.rangeQuery("_seq_no").gt(maxSeqNoValue).toString()),
                 "", "", Collections.emptyMap(),
                 new TimeValue(100, TimeUnit.MILLISECONDS),
                 new TimeValue(100, TimeUnit.SECONDS)
-        );
-    }
-
-    private static Script createScript() {
-        return new Script(
-                ScriptType.INLINE,
-                "painless",
-                "ctx._source.remove('_is_under_migration')",
-                Collections.emptyMap()
         );
     }
 }

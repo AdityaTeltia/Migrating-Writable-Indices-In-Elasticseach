@@ -18,8 +18,7 @@ import java.util.List;
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
-    // Pipeline
-    private static final String pipelineName = "adding_hidden_field";
+
     // S3_repository
     private static final String sourceRepository = "Snapshot_S3";
     // Hosts
@@ -48,7 +47,7 @@ public class Main {
 
             // Migration starts
             Instant startTime = Instant.now();
-            Migration.migrateIndices(sourceClient, destClient, pipelineName, sourceHost, sourceIndexList, destIndices,
+            Migration.migrateIndices(sourceClient, destClient, sourceHost, sourceIndexList, destIndices,
                     sourceRepository);
             Instant endTime = Instant.now();
 

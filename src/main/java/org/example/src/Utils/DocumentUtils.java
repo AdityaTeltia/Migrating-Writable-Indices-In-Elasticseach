@@ -52,7 +52,7 @@ public class DocumentUtils {
     }
 
 
-    public static void addDocuments(RestHighLevelClient client, String index) throws IOException, InterruptedException {
+    public static void addDocuments(RestHighLevelClient client, String index, String id) throws IOException, InterruptedException {
             // Define the document data
             String name = generateRandomString(RANDOM_STRING_LENGTH);
             int age = 30;
@@ -67,8 +67,13 @@ public class DocumentUtils {
             builder.endObject();
 
             // Create the IndexRequest and add the document to the index
-            IndexRequest indexRequest = new IndexRequest(index).source(builder);
-            IndexResponse indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);
+            if(id == null){
+                IndexRequest indexRequest = new IndexRequest(index).source(builder);
+                client.index(indexRequest, RequestOptions.DEFAULT);
+            }else{
+                IndexRequest indexRequest = new IndexRequest(index).id(id).source(builder);
+                client.index(indexRequest, RequestOptions.DEFAULT);
+            }
     }
 
     private static String generateRandomString(int length) {

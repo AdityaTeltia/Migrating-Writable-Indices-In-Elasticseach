@@ -16,18 +16,11 @@ public class Migration {
     private static final Logger logger = LoggerFactory.getLogger(Migration.class);
 
     public static double phaseOneMigrateIndices(RestHighLevelClient sourceClient, RestHighLevelClient destClient,
-                                              String sourceIndex, String pipelineName, String sourceRepository,
+                                              String sourceIndex, String sourceRepository,
                                               String destIndex) throws IOException {
         try {
             // Step 0: Pre-migration checks
             Checks.preMigrationCheck(destClient, sourceClient, sourceIndex, destIndex);
-
-            /*
-            // Step 1: Setting mapping for the new field we are adding
-            MappingUtils.setMapping(sourceClient, sourceIndex);
-
-            // Step 1.1: Change write pipeline
-            PipelineUtils.changePipeline(sourceClient, pipelineName, count, sourceIndex); */
 
             //Step 1: Get Last Sequence Number
             double maxSeqNoValue = DocumentUtils.getLastSequenceNumber(sourceClient, sourceIndex);
@@ -36,10 +29,7 @@ public class Migration {
             String snapshotName = SnapshotUtils.snaps(sourceClient, sourceRepository, sourceIndex, destClient, destIndex);
 
             // Step 2.1: Verifying snapshot and restore
-            Checks.verifyDocumentsCount(sourceClient, sourceIndex, destClient, destIndex);
-
-            // Making the pipeline null in the destination index
-            PipelineUtils.makeNull(destClient, destIndex);
+            Checks.verifyDocumentsCount(sourceClient, sourceIndex, destClient, destIndex, true);
 
             // Deleting snapshot to release memory
             CleanupUtils.deleteSnapshot(sourceClient, sourceRepository, snapshotName);
@@ -61,7 +51,7 @@ public class Migration {
             ReindexUtils.reindexData(destClient, sourceHost, sourceIndex, destIndex, maxSeqNoValue);
 
             // Step 1.1: Post second pass verification
-            Checks.verifyDocumentsCount(sourceClient, sourceIndex, destClient, destIndex);
+            Checks.verifyDocumentsCount(sourceClient, sourceIndex, destClient, destIndex, false);
 
             // Step 2: Cleanup
             CleanupUtils.deleteIndex(sourceClient, sourceIndex);
@@ -71,8 +61,7 @@ public class Migration {
         }
     }
 
-    public static void migrateIndices(RestHighLevelClient sourceClient, RestHighLevelClient destClient,
-                                      String pipelineName, String sourceHost, List<String> sourceIndices,
+    public static void migrateIndices(RestHighLevelClient sourceClient, RestHighLevelClient destClient, String sourceHost, List<String> sourceIndices,
                                       List<String> destIndices, String sourceRepository) throws IOException {
         try {
             for (int i = 0; i < sourceIndices.size(); i += BATCH_SIZE) {
@@ -89,8 +78,7 @@ public class Migration {
                     String sourceIndex = batchSourceIndices.get(j);
                     String destIndex = batchDestIndices.get(j);
 
-                    double maxSeqNoValue = phaseOneMigrateIndices(sourceClient, destClient, sourceIndex,
-                            pipelineName, sourceRepository, destIndex);
+                    double maxSeqNoValue = phaseOneMigrateIndices(sourceClient, destClient, sourceIndex, sourceRepository, destIndex);
 
                     sequenceMap.put(sourceIndex, maxSeqNoValue);
                 }

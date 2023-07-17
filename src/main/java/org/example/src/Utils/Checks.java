@@ -102,17 +102,26 @@ public class Checks {
         }
     }
 
-    public static void verifyDocumentsCount(RestHighLevelClient sourceClient, String sourceIndex, RestHighLevelClient destClient, String destIndex) throws IOException {
+
+    public static void verifyDocumentsCount(RestHighLevelClient sourceClient, String sourceIndex, RestHighLevelClient destClient, String destIndex, boolean first) throws IOException {
         try {
             long sourceCount = checkDocumentCount(sourceClient, sourceIndex);
             long destCount = checkDocumentCount(destClient, destIndex);
 
-            if (sourceCount > destCount) {
-                logger.error(LOG_VERIFICATION_ERROR_MESSAGE);
+            if(first){
+                if (sourceCount < destCount) {
+                    logger.error(LOG_VERIFICATION_ERROR_MESSAGE);
+                }
+            }else{
+                if (sourceCount > destCount) {
+                    logger.error(LOG_VERIFICATION_ERROR_MESSAGE);
+                }
             }
         } catch (IOException e) {
             logger.error("Error while verifying document count: " + e.getMessage(), e);
             throw e;
         }
     }
+
+
 }
