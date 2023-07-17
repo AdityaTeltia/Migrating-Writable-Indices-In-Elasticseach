@@ -34,17 +34,13 @@ Have you ever tried migrating an existing index between cluster due to some pers
    ```
 5. Now user have to configure some changes in the code. Set all the following variables.
    ```
-    // Pipeline
-    private static final String pipelineName = "adding_hidden_field";
-   
     // S3_repository
     private static final String sourceRepository = "Snapshot_S3";
-   
     // Hosts
     private static final String sourceHost = "http://localhost:9200";
     private static final String destHost = "http://localhost:9201";
-
-    // Prefix of all the indices that you want to migrate
+   
+    // Prefix of the index you want to migrate
     private static final String prefixIndex = "test";
    
    ```
@@ -90,7 +86,7 @@ public static double getLastSequenceNumber(RestHighLevelClient client, String in
 }
 ```
 
-### Step 2: Taking inital snapshot and restoring it 
+### Step 2: Taking initial snapshot and restoring it 
 Taking the snapshot of the current state and restoring it to the destination cluster. Since we already have stored the last sequence number we can move in with this first pass now.
 [(Related Code)](https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/blob/main/src/main/java/org/example/Utils/SnapshotUtils.java)
 
