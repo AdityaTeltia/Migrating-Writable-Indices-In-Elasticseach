@@ -36,7 +36,7 @@ public class Migration {
 
             // Deleting snapshot to release memory
             CleanupUtils.deleteSnapshot(sourceClient, sourceRepository, snapshotName);
-            logger.info("First Phase Completed!");
+
             return maxSeqNoValue;
         } catch (ElasticsearchException e) {
             logger.error("Migration failed: ", e);
@@ -99,7 +99,7 @@ public class Migration {
                 executorService.shutdown();
 
             }
-
+            logger.info("First Phase Completed!");
 //              ---------------------------------- SHIFT OPERATIONS -----------------------------------------------
 
             Scanner scanner = new Scanner(System.in);

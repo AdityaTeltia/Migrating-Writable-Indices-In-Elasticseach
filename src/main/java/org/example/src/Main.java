@@ -28,10 +28,15 @@ public class Main {
 
     public static void main(String[] args) {
         try (RestHighLevelClient sourceClient = new RestHighLevelClient(
-                RestClient.builder(HttpHost.create(sourceHost)));
+                RestClient.builder(HttpHost.create(sourceHost)).setRequestConfigCallback(
+                        requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(60000).setSocketTimeout(90000)
+                ));
              RestHighLevelClient destClient = new RestHighLevelClient(
-                     RestClient.builder(HttpHost.create(destHost)))) {
+                     RestClient.builder(HttpHost.create(destHost)).setRequestConfigCallback(
+                             requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(60000).setSocketTimeout(90000)
+                     ));) {
 
+            Initializer.initialise(sourceClient);
             // Indexes
             GetIndexResponse sourceIndicesResponse = sourceClient.indices()
                     .get(new GetIndexRequest(prefixIndex + "*"), RequestOptions.DEFAULT);

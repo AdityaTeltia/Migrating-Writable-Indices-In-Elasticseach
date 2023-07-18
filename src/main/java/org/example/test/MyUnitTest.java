@@ -8,20 +8,20 @@ import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.xcontent.XContentBuilder;
+import org.elasticsearch.xcontent.XContentFactory;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.example.src.Initializer;
-import org.junit.jupiter.api.Test;
-import org.example.src.Utils.*;
 import org.example.src.Migration;
+import org.example.src.Utils.DocumentUtils;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
-import java.util.Scanner;
 import java.io.IOException;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
