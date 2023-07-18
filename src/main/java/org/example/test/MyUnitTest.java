@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.example.src.Utils.*;
 import org.example.src.Migration;
 
+import java.io.ByteArrayInputStream;
 import java.util.Scanner;
 import java.io.IOException;
 import java.util.Random;
@@ -42,15 +43,29 @@ class MyUnitTest {
                      RestClient.builder(HttpHost.create(destHost)))) {
 
             DocumentUtils.addDocuments(sourceClient , sourceIndex, "1");
+
             // Phase One
             double maxSeqNoValue = phaseOne(sourceClient, destClient).get();
             Initializer.refreshIndex(sourceClient, sourceIndex);
             Initializer.refreshIndex(destClient, destIndex);
             phaseCompleted.set(false);
             updateDocuments(sourceClient, sourceIndex , "1");
-            Thread.sleep(10000);
-            phaseTwo(sourceClient, destClient, maxSeqNoValue);
-            // Phase Two
+
+            // Input to either skip or run phase two
+            String data = "Yes";
+            System.setIn(new ByteArrayInputStream(data.getBytes()));
+
+            try (Scanner scanner = new Scanner(System.in)) {
+                System.out.println("Do you want to proceed with Phase Two? (Yes/No)");
+                String userInput = scanner.nextLine().trim();
+                if ("Yes".equalsIgnoreCase(userInput)) {
+                    phaseCompleted.set(false);
+                    // Phase Two
+                    phaseTwo(sourceClient, destClient, maxSeqNoValue);
+                } else {
+                    System.out.println("Phase Two skipped as per user input.");
+                }
+            }
         } catch (IOException e) {
             throw e;
         } catch (ExecutionException e) {

@@ -20,7 +20,7 @@ public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     // S3_repository
-    private static final String sourceRepository = "Snapshot_S3";
+    private static final String sourceRepository = "s3testing";
     // Hosts
     private static final String sourceHost = "http://localhost:9200";
     private static final String destHost = "http://localhost:9201";
@@ -31,9 +31,6 @@ public class Main {
                 RestClient.builder(HttpHost.create(sourceHost)));
              RestHighLevelClient destClient = new RestHighLevelClient(
                      RestClient.builder(HttpHost.create(destHost)))) {
-
-            // Initializing some indices for testing purposes
-            Initializer.initialise(sourceClient);
 
             // Indexes
             GetIndexResponse sourceIndicesResponse = sourceClient.indices()
@@ -59,6 +56,8 @@ public class Main {
             logger.info("Total duration: {} seconds", totalDuration);
         } catch (IOException e) {
             logger.error("An error occurred during execution", e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 }
