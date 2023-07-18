@@ -126,6 +126,13 @@ pip install elasticsearch
 ```
 python3 main.py
 ```
+3. Configure following as per needs
+```
+source_host = "http://localhost:9200"
+dest_host = "http://localhost:9201"
+indices = ["test"]
+dest_indices = ["restored_test"]
+```
 We can see :
 - Initially `source_index` have a lot of documents
 <img width="772" alt="Screenshot 2023-07-15 at 12 19 26 PM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/4f0d71dd-7d7d-4fbb-ae33-a61cb30ce636">
