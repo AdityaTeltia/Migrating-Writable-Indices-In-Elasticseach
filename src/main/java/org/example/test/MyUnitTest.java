@@ -28,10 +28,10 @@ class MyUnitTest {
     private static final String sourceHost = "http://localhost:9200";
     private static final String destHost = "http://localhost:9201";
     // S3_repository
-    private static final String sourceRepository = "Snapshot_S3";
+    private static final String sourceRepository = "s3testing";
     private AtomicBoolean phaseCompleted = new AtomicBoolean(false);
     String sourceIndex = "test";
-    String destIndex = "test";
+    String destIndex = "restored_test";
     int threadCount = 9;
 
     @Test
@@ -47,7 +47,6 @@ class MyUnitTest {
             Initializer.refreshIndex(sourceClient, sourceIndex);
             Initializer.refreshIndex(destClient, destIndex);
             phaseCompleted.set(false);
-
             updateDocuments(sourceClient, sourceIndex , "1");
             Thread.sleep(10000);
             phaseTwo(sourceClient, destClient, maxSeqNoValue);

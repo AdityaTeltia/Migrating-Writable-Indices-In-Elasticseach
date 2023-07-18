@@ -53,8 +53,9 @@ public class Migration {
             // Step 1.1: Post second pass verification
             Checks.verifyDocumentsCount(sourceClient, sourceIndex, destClient, destIndex, false);
 
-            // Step 2: Cleanup
-            CleanupUtils.deleteIndex(sourceClient, sourceIndex);
+            // Step 2: Cleanup [ Can delete or Can make the index read only ]
+            CleanupUtils.makeIndexReadOnly(sourceClient, sourceIndex);
+//            CleanupUtils.deleteIndex(sourceClient, sourceIndex);
         } catch (ElasticsearchException e) {
             logger.error("Migration failed: ", e);
             throw e;
