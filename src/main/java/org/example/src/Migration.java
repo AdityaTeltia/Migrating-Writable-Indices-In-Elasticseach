@@ -112,12 +112,25 @@ public class Migration {
                 return;
             }
 
-            for(int i = 0;i<sourceIndices.size();i++){
-                String sourceIndex = sourceIndices.get(i);
-                String destIndex = destIndices.get(i);
-                double maxSeqNoValue = sequenceMap.get(sourceIndex);
-                phaseTwoMigrateIndices(destClient, sourceClient, sourceHost, sourceIndex, destIndex, maxSeqNoValue);
+            ExecutorService executorService = Executors.newFixedThreadPool(BATCH_SIZE);
+            List<Callable<Void>> tasks = new ArrayList<>();
+            for (int j = 0; j < sourceIndices.size(); j++) {
+                String sourceIndex = sourceIndices.get(j);
+                String destIndex = destIndices.get(j);
+                Callable<Void> task = () -> {
+                    try {
+                        double maxSeqNoValue = sequenceMap.get(sourceIndex);
+                        phaseTwoMigrateIndices(destClient, sourceClient, sourceHost, sourceIndex, destIndex, maxSeqNoValue);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return null;
+                };
+                tasks.add(task);
             }
+            // Execute all tasks concurrently
+            executorService.invokeAll(tasks);
+            executorService.shutdown();
 
             logger.info("All indices migrated successfully!");
         } catch (ElasticsearchException | InterruptedException e) {

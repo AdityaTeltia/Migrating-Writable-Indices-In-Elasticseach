@@ -18,7 +18,6 @@ import java.util.List;
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
-
     // S3_repository
     private static final String sourceRepository = "s3testing";
     // Hosts
@@ -37,6 +36,7 @@ public class Main {
                      ));) {
 
             Initializer.initialise(sourceClient);
+
             // Indexes
             GetIndexResponse sourceIndicesResponse = sourceClient.indices()
                     .get(new GetIndexRequest(prefixIndex + "*"), RequestOptions.DEFAULT);
