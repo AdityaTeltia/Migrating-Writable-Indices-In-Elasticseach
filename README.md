@@ -61,7 +61,7 @@ Here I am checking mainly two things:
 2. Checking whether the available disk space can store the coming index from source cluster or not.
 
 ### Step 1: Storing last sequence number
-Storing the sequence number of the last operation happened on this index to query based on the number greater than this during the second pass while we reindex the delta changes.
+Storing the sequence number of the last operation happened on this index to query based on the number greater than this during the second pass while we reindex the delta changes. Finding the maximum sequence number using aggregation.
 ```
 public static double getLastSequenceNumber(RestHighLevelClient client, String index) throws IOException {
         MaxAggregationBuilder maxSeqNoAggregation = AggregationBuilders.max("max_seq_no").field("_seq_no");

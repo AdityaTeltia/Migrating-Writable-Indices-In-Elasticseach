@@ -66,6 +66,7 @@ public class Migration {
     public static void migrateIndices(RestHighLevelClient sourceClient, RestHighLevelClient destClient, String sourceHost, List<String> sourceIndices,
                                       List<String> destIndices, String sourceRepository) throws IOException, InterruptedException {
         try {
+            DocumentUtils.addDocuments(sourceClient , "test_1", "1");
             HashMap<String , Double> sequenceMap = new HashMap<>();
             for (int i = 0; i < sourceIndices.size(); i += BATCH_SIZE) {
                 List<String> batchSourceIndices = sourceIndices.subList(i,
@@ -100,6 +101,7 @@ public class Migration {
 
             }
             logger.info("First Phase Completed!");
+            DocumentUtils.updateDocuments(sourceClient , "test_1", "1");
 //              ---------------------------------- SHIFT OPERATIONS -----------------------------------------------
 
             Scanner scanner = new Scanner(System.in);

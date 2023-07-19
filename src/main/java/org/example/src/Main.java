@@ -6,6 +6,7 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.GetIndexResponse;
+import org.example.src.Utils.DocumentUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +20,7 @@ import java.util.List;
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     // S3_repository
-    private static final String sourceRepository = "s3testing";
+    private static final String sourceRepository = "Snapshot_S3";
     // Hosts
     private static final String sourceHost = "http://localhost:9200";
     private static final String destHost = "http://localhost:9201";
@@ -34,8 +35,6 @@ public class Main {
                      RestClient.builder(HttpHost.create(destHost)).setRequestConfigCallback(
                              requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(60000).setSocketTimeout(90000)
                      ));) {
-
-            Initializer.initialise(sourceClient);
 
             // Indexes
             GetIndexResponse sourceIndicesResponse = sourceClient.indices()
