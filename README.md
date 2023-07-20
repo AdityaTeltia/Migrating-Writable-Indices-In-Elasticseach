@@ -7,6 +7,7 @@ Have you ever tried migrating an existing index between cluster due to some pers
 3. [How I tested ?](#how-i-tested-)
 4. [Visualiser](#visualiser)
 
+[Video Demo Link](https://drive.google.com/file/d/1xRdaApoSOkJpcBbFxCB0J1l8Bf0M5Mmv/view?usp=share_link)
 
 # Quick Setup
 
@@ -52,7 +53,8 @@ Let me walk you through the steps we will go through in order to migrate an inde
 # Approach Walkthrough
 
 ## Phase 1 - Inital Migration [Using Snapshot And Restore]
-<img width="639" alt="Screenshot 2023-07-16 at 4 09 28 PM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/fc8cb793-c6cb-4c31-b269-12ea194907b8">
+<img width="601" alt="Screenshot 2023-07-20 at 4 29 52 PM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/3a192714-04db-4068-bdee-b3fa0924c8b6">
+
 
 
 ### Step 0: Pre Migration Checks 
@@ -97,7 +99,8 @@ Comparing the count of documents in ```source index``` and ```destination index`
 > Shifting the operation from source cluster to destination cluster
 
 ## Phase 2 - Second Migration Pass [Using ReIndex]
-<img width="524" alt="Screenshot 2023-07-16 at 4 13 45 PM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/69299dab-bece-49a3-be5a-ac1ce700955e">
+<img width="526" alt="Screenshot 2023-07-20 at 4 29 33 PM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/18fd9b2a-8c49-43cc-8be6-19ddba58a8d3">
+
 
 ### Step 1: Reindexing 
 Reindexing the index based on the last sequence number which we stored during the phase1. We will be querying all those documents which has sequence number `gt: maxSeqNoValue`.
@@ -135,19 +138,23 @@ dest_indices = ["restored_test"]
 ```
 We can see :
 - Initially `source_index` have a lot of documents
-<img width="772" alt="Screenshot 2023-07-15 at 12 19 26 PM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/4f0d71dd-7d7d-4fbb-ae33-a61cb30ce636">
+<img width="772" alt="Screenshot 2023-07-15 at 12 19 26 PM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/b1182575-fdde-4675-8ffb-352e4933dfe4">
+
 
 
 - After the snapshot and restore the situation becomes as follows
-<img width="772" alt="Screenshot 2023-07-15 at 12 06 28 PM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/9671557e-1aff-470c-afc0-fa874a2206f4">
+<img width="772" alt="Screenshot 2023-07-15 at 12 06 28 PM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/c08f5366-ff6d-48ee-b41d-a3c272182692">
+
 
 
 - But the documents still keeps getting added and updated to `source_index` but these documents have a special field which we have added.
-<img width="772" alt="Screenshot 2023-07-15 at 12 06 34 PM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/1693cb24-bac7-481e-8c4e-3827923f3b0d">
+<img width="772" alt="Screenshot 2023-07-15 at 12 06 34 PM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/6fa957c1-84d0-4687-97ab-d71562fb1a3c">
+
 
 
 - After Reindexing `source_index` is downgraded and documents keep getting added, updated or queried from `dest_index`
-<img width="772" alt="Screenshot 2023-07-15 at 12 06 38 PM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/f54763c1-73ae-4105-9e6a-797676196815">
+<img width="772" alt="Screenshot 2023-07-15 at 12 06 38 PM" src="https://github.com/AdityaTeltia/Sprinklr-Intern-Project-2/assets/67232537/93cc5a56-4e83-4f09-aca8-54529df76b6b">
+
 
 
 
